@@ -1,4 +1,5 @@
 import { apiFetch } from './api'
+import { pythonApiFetch } from './api'
 
 export async function triggerCapture() {
   return apiFetch('/captures', {
@@ -16,7 +17,7 @@ export async function verifyFacesInFrame(imageBlob) {
   formData.append('file', imageBlob, 'frame.jpg')
 
   // Pense à remplacer l'URL si ton API n'est pas sur le port 8000
-  const response = await fetch('http://127.0.0.1:8000/recognize', {
+  const response = await pythonApiFetch('/recognize', {
     method: 'POST',
     body: formData,
   })

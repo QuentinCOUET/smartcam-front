@@ -9,12 +9,9 @@ export default function VideoPlayer({ streamUrl }) {
 
   return (
     <div className="overflow-hidden rounded-3xl border border-slate-800 bg-black">
-      <video
+      <img
         src={streamUrl}
-        controls
-        autoPlay
-        muted
-        playsInline
+        alt="Flux caméra en direct"
         className="aspect-[16/9] w-full object-cover"
       />
     </div>

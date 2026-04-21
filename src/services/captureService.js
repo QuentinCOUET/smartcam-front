@@ -1,5 +1,4 @@
-import { apiFetch } from './api'
-import { pythonApiFetch } from './api'
+import {apiFetch, pythonApiFetch} from './api'
 
 export async function triggerCapture() {
   return apiFetch('/captures', {
@@ -13,18 +12,12 @@ export async function getCaptures() {
 
 export async function verifyFacesInFrame(imageBlob) {
   const formData = new FormData()
-  // On attache le blob sous le nom "file", comme attendu par FastAPI
+  // On s'assure d'envoyer le blob sous le nom 'file'
   formData.append('file', imageBlob, 'frame.jpg')
 
-  // Pense à remplacer l'URL si ton API n'est pas sur le port 8000
-  const response = await pythonApiFetch('/recognize', {
+  // On utilise notre belle méthode centralisée
+  return await pythonApiFetch('/recognize', {
     method: 'POST',
     body: formData,
   })
-
-  if (!response.ok) {
-    throw new Error("Erreur lors de l'appel à l'API de reconnaissance.")
-  }
-
-  return await response.json()
 }

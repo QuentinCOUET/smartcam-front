@@ -1,36 +1,47 @@
 import { useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
 
 const VideoPlayer = forwardRef(({ streamUrl, facesData }, ref) => {
+    // On crée deux références distinctes selon le média affiché
     const videoRef = useRef(null)
+    const imgRef = useRef(null)
     const canvasRef = useRef(null)
 
-    // --- NOUVEAUTÉ : Gestion intelligente de la source vidéo ---
-    useEffect(() => {
-        if (videoRef.current && streamUrl) {
-            if (typeof streamUrl === 'string') {
-                // C'est une URL texte (ex: flux de l'ESP32)
-                videoRef.current.srcObject = null
-                videoRef.current.src = streamUrl
-            } else if (streamUrl instanceof MediaStream) {
-                // C'est un objet flux vidéo (ex: Webcam locale)
-                videoRef.current.src = ''
-                videoRef.current.srcObject = streamUrl
-            }
-        }
-    }, [streamUrl])
-    // -----------------------------------------------------------
+    // On détermine le type de flux actuel
+    const isWebcam = streamUrl instanceof MediaStream
+    const isEsp32 = typeof streamUrl === 'string'
 
+    // --- Gestion du flux de la Webcam ---
+    useEffect(() => {
+        if (isWebcam && videoRef.current) {
+            videoRef.current.srcObject = streamUrl
+        }
+    }, [streamUrl, isWebcam])
+
+    // --- Fonction de capture adaptative ---
     useImperativeHandle(ref, () => ({
         captureFrame: () => {
             return new Promise((resolve) => {
-                const video = videoRef.current
-                if (!video) return resolve(null)
+                let mediaElement
+                let width, height
+
+                // On récupère le bon élément et ses dimensions selon le flux actif
+                if (isWebcam && videoRef.current) {
+                    mediaElement = videoRef.current
+                    width = mediaElement.videoWidth
+                    height = mediaElement.videoHeight
+                } else if (isEsp32 && imgRef.current) {
+                    mediaElement = imgRef.current
+                    width = mediaElement.naturalWidth
+                    height = mediaElement.naturalHeight
+                }
+
+                if (!mediaElement || !width || !height) return resolve(null)
 
                 const tempCanvas = document.createElement('canvas')
-                tempCanvas.width = video.videoWidth
-                tempCanvas.height = video.videoHeight
+                tempCanvas.width = width
+                tempCanvas.height = height
                 const ctx = tempCanvas.getContext('2d')
-                ctx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height)
+                ctx.drawImage(mediaElement, 0, 0, width, height)
 
                 tempCanvas.toBlob((blob) => {
                     resolve(blob)
@@ -39,15 +50,26 @@ const VideoPlayer = forwardRef(({ streamUrl, facesData }, ref) => {
         }
     }))
 
+    // --- Dessin des rectangles adaptatif ---
     useEffect(() => {
         const canvas = canvasRef.current
-        const video = videoRef.current
-        if (!canvas || !video) return
+        if (!canvas) return
+
+        let width, height
+        if (isWebcam && videoRef.current) {
+            width = videoRef.current.videoWidth || 640
+            height = videoRef.current.videoHeight || 480
+        } else if (isEsp32 && imgRef.current) {
+            width = imgRef.current.naturalWidth || 640
+            height = imgRef.current.naturalHeight || 480
+        } else {
+            return
+        }
 
         const ctx = canvas.getContext('2d')
-        canvas.width = video.videoWidth || 640
-        canvas.height = video.videoHeight || 480
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        canvas.width = width
+        canvas.height = height
+        ctx.clearRect(0, 0, width, height)
 
         if (facesData && facesData.length > 0) {
             facesData.forEach((face) => {
@@ -63,7 +85,7 @@ const VideoPlayer = forwardRef(({ streamUrl, facesData }, ref) => {
                 ctx.fillText(text, left + 5, top - 8)
             })
         }
-    }, [facesData])
+    }, [facesData, isWebcam, isEsp32])
 
     if (!streamUrl) {
         return (
@@ -73,15 +95,34 @@ const VideoPlayer = forwardRef(({ streamUrl, facesData }, ref) => {
         )
     }
 
-  return (
-    <div className="overflow-hidden rounded-3xl border border-slate-800 bg-black">
-      <img
-        src={streamUrl}
-        alt="Flux caméra"
-        className="aspect-[16/9] w-full object-cover"
-      />
-    </div>
-  )
+    return (
+        <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-black">
+
+            {/* Affichage conditionnel selon le type de flux */}
+            {isWebcam ? (
+                <video
+                    ref={videoRef}
+                    autoPlay
+                    muted
+                    playsInline
+                    className="aspect-[16/9] w-full object-cover"
+                />
+            ) : (
+                <img
+                    ref={imgRef}
+                    src={streamUrl}
+                    crossOrigin="anonymous"
+                    alt="Flux ESP32"
+                    className="aspect-[16/9] w-full object-cover"
+                />
+            )}
+
+            <canvas
+                ref={canvasRef}
+                className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+            />
+        </div>
+    )
 })
 
 VideoPlayer.displayName = 'VideoPlayer'

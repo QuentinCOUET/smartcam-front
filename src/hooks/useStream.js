@@ -1,27 +1,31 @@
 import { useEffect, useState } from 'react'
-import { getStreamInfo } from '../services/streamService'
+import { getCam } from '../services/camService'
 
 export default function useStream() {
   const [streamUrl, setStreamUrl] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [cam, setCam] = useState(null)
 
   useEffect(() => {
-    async function loadStream() {
+    async function loadCam() {
       try {
         setLoading(true)
         setError('')
-        const data = await getStreamInfo()
-        setStreamUrl(data.streamUrl || '')
+
+        const data = await getCam()
+
+        setCam(data)
+        setStreamUrl(data.videoUrl || '')
       } catch (err) {
-        setError('Impossible de charger le flux vidéo.')
+        setError('Impossible de charger la caméra.')
       } finally {
         setLoading(false)
       }
     }
 
-    loadStream()
+    loadCam()
   }, [])
 
-  return { streamUrl, loading, error }
+  return { cam, streamUrl, loading, error }
 }

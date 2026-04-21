@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { updateCam } from '../services/camService'
 
 const SERVICE_UUID = '7f220001-7c54-4a32-9d2d-41c1f6a7a001'
 const CONFIG_CHAR_UUID = '7f220002-7c54-4a32-9d2d-41c1f6a7a001'
@@ -9,6 +10,7 @@ export default function CameraProvisioning() {
   const [password, setPassword] = useState('')
   const [status, setStatus] = useState('idle')
   const [streamUrl, setStreamUrl] = useState('')
+  const [ipCam, setIpCam] = useState('')
   const [loading, setLoading] = useState(false)
 
   const connectAndProvision = async () => {
@@ -34,51 +36,53 @@ export default function CameraProvisioning() {
 
       await statusChar.startNotifications()
 
-    statusChar.addEventListener('characteristicvaluechanged', (event) => {
+      statusChar.addEventListener('characteristicvaluechanged', async (event) => {
         const value = new TextDecoder().decode(event.target.value)
         console.log('BLE status:', value)
 
         try {
-            const json = JSON.parse(value)
+          const json = JSON.parse(value)
 
-            if (json.state === 'received') {
+          if (json.state === 'received') {
             setStatus('Configuration reçue par la caméra.')
             return
-            }
+          }
 
-            if (json.state === 'connecting') {
+          if (json.state === 'connecting') {
             setStatus('Connexion de la caméra au Wi-Fi...')
             return
-            }
+          }
 
-            if (json.state === 'wifi_connected' && json.ip) {
+          if (json.state === 'wifi_connected' && json.ip) {
             const url = `http://${json.ip}:81/stream`
-            setStreamUrl(url)
-            setStatus(`Wi-Fi configuré. Redémarrage imminent... URL détectée: ${url}`)
-            return
-            }
 
-            if (json.state === 'restarting') {
+            setIpCam(json.ip)
+            setStreamUrl(url)
+
+            await updateCam({
+              videoUrl: url,
+              ipCam: json.ip,
+            })
+
+            setStatus('Wi-Fi configuré. Caméra mise à jour dans le back.')
+            return
+          }
+
+          if (json.state === 'restarting') {
             setStatus('Redémarrage de la caméra en cours...')
             return
-            }
+          }
 
-            if (json.state === 'connected' && json.streamUrl) {
-            setStreamUrl(json.streamUrl)
-            setStatus('Caméra connectée.')
-            return
-            }
-
-            if (json.state === 'failed') {
+          if (json.state === 'failed') {
             setStatus(`Erreur caméra: ${json.reason || 'inconnue'}`)
             return
-            }
+          }
 
-            setStatus(json.state || 'unknown')
+          setStatus(json.state || 'unknown')
         } catch {
-            setStatus(value)
+          setStatus(value)
         }
-    })
+      })
 
       const payload = {
         ssid,
@@ -151,6 +155,12 @@ export default function CameraProvisioning() {
         <p className="mt-2 rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-slate-300">
           {status}
         </p>
+
+        {ipCam && (
+          <p className="mt-3 text-sm text-slate-400">
+            IP caméra : {ipCam}
+          </p>
+        )}
       </section>
 
       {streamUrl && (

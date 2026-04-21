@@ -11,7 +11,7 @@ export default function VideoPlayer({ streamUrl }) {
     <div className="overflow-hidden rounded-3xl border border-slate-800 bg-black">
       <img
         src={streamUrl}
-        alt="Flux caméra en direct"
+        alt="Flux caméra"
         className="aspect-[16/9] w-full object-cover"
       />
     </div>

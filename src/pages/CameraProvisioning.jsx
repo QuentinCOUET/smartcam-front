@@ -109,6 +109,7 @@ export default function CameraProvisioning() {
         <p className="mt-2 text-sm leading-6 text-slate-300">
           Connecte-toi à la caméra via Bluetooth pour lui envoyer les
           identifiants Wi-Fi.
+          Pour mettre la caméra en mode Bluetooth, Appuie deux fois sur le bouton RST à deux secondes d'intervalle.
         </p>
       </section>
 

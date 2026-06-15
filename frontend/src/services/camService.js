@@ -5,7 +5,7 @@ export async function getCam() {
         setTimeout(() => {
             resolve({
                 nom: 'Caméra salon',
-                videoUrl: 'http://10.0.3.35:81/stream',
+                streamUrl: 'http://10.0.3.35:81/stream',
                 ipCam: '192.168.1.50',
                 createdAt: '2026-04-21T13:40:00+00:00',
             })

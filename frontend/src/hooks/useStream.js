@@ -16,7 +16,7 @@ export default function useStream() {
         const data = await getCam()
 
         setCam(data)
-        setStreamUrl(data.videoUrl || '')
+        setStreamUrl(data.streamUrl || '')
       } catch (err) {
         setError('Impossible de charger la caméra.')
       } finally {

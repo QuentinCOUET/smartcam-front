@@ -60,7 +60,7 @@ export default function CameraProvisioning() {
             setStreamUrl(url)
 
             await updateCam({
-              videoUrl: url,
+              streamUrl: url,
               ipCam: json.ip,
             })
 

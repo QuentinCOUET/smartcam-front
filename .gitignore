@@ -32,3 +32,11 @@ Thumbs.db
 
 # Vite cache
 .vite/
+
+# Python (Backend)
+backend/.env
+backend/.venv/
+__pycache__/
+*.pyc
+.mypy_cache/
+.pytest_cache/
